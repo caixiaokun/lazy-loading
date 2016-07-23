@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>jQuery Plugin</title>
+	<style>
+        body {margin: 0;padding: 0;font-family: "Microsoft Yahei";background: #f5f5f5;}
+        .container{width: 1200px;margin: 0 auto;padding-top:40px}
+        .container > .items{position: relative;}
+        .container > .items > .item{width: 232px;position: absolute;box-shadow: 0 1px 3px rgba(0,0,0,0.3);}
+        .container > .items > .item > img{width: 100%;display: block;height: 250px}
+        .container > .items > .item:nth-child(4n) > img{width: 100%;display: block;height: 450px}
+        .container > .items > .item > p{margin: 0;padding:10px;background: #fff;}
+        .container > .btn {
+            width: 280px;
+            height: 40px;
+            margin: 30px auto;
+            text-align: center;
+            line-height: 40px;
+            background-color: #CCC;
+            border-radius: 6px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .container > .loading{
+            background-color: transparent;
+        }
+	</style>
+</head>
+<body>
+	<div class="container">
+		<div class="items"></div>
+		<div class="btn loading">小高正在拼命加载中...</div>
+	</div>
+	<script src="js/jquery.min.js"></script>
+	<script src="js/template.js"></script>
+	<!-- <script src="js/jquery.WaterFall.js"></script> -->
+	<script src="js/jq.fall.js"></script>
+	<script>
+		function getData(page) {
+			// 请求数据
+			$.ajax({
+				url: './data.php',
+				type: 'post',
+				data: {page:page,pageSize:12},
+				beforeSend: function () {
+					$('.btn').text('正在加载...').addClass('loading');
+				},
+				success: function (data) {
+					console.log(data);
+					window.myData = data;
+					var html = template('tpl3', data);
+
+					// 添加元素
+					$('.items').append(html);
+
+                    // 瀑布流布局
+                    $('.items').WaterFall();
+
+					// 把页码放到按钮上面
+					$('.btn').attr('data-page', data.page);
+				},
+				complete: function () {
+                    if(window.myData && window.myData.items.length == 0){
+                        $('.btn').text('没有更多了..').addClass('loading');
+                        return false;
+                    }
+					$('.btn').text('点击加载更多').removeClass('loading');
+				}
+			});
+		}
+
+		// 首次加载
+		getData(1);
+
+		// 添加点击事件
+		$('.btn').on('click', function () {
+			if($(this).hasClass('loading')) {
+				return;
+			}
+
+			var page = $(this).attr('data-page');
+
+			getData(page);
+		});
+
+		/* $(window).on('scroll', function () {
+
+		 	var offsetTop = $('.items').offset().top;
+
+		 	var height = $('.items').height();
+
+		 	var scrollTop = $(this).scrollTop();
+
+		 	var winHeight = $(this).height();
+
+		 	var offset = offsetTop + height - scrollTop - winHeight;
+
+		 	if(offset <= 200 && !$('.btn').is('.loading')) {
+		 		var page = $('.btn').attr('data-page');
+		 		getData(page);
+		 	}
+
+		 });*/
+	</script>
+	<!-- 模板 -->
+	<script type="text/template" id="tpl3">
+		{{ each items }}
+			<div class="item loading">
+				<img src="{{$value.path}}">
+				<p>{{$value.text}}</p>
+			</div>
+		{{ /each }}
+	</script>
+</body>
+</html>

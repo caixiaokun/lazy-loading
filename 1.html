@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+        body {margin: 0;padding: 0;font-family: "Microsoft Yahei";background: #f5f5f5;}
+        .bigbox{width: 1200px;margin: 0 auto;padding-top:40px}
+        .bigbox > .items{position: relative;}
+        .bigbox > .items > .item{width: 232px;position: absolute;box-shadow: 0 1px 3px rgba(0,0,0,0.3);}
+        .bigbox > .items > .item > img{width: 100%;display: block;height: 250px}
+        .bigbox > .items > .item:nth-child(4n) > img{width: 100%;display: block;height: 450px}
+        .bigbox > .items > .item > p{margin: 0;padding:10px;background: #fff;}
+        .bigbox > .btn {
+            width: 280px;
+            height: 40px;
+            margin: 30px auto;
+            text-align: center;
+            line-height: 40px;
+            background-color: #CCC;
+            border-radius: 6px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .bigbox > .loading{
+            background-color: transparent;
+        }
+    </style>
+</head>
+<body>
+<div class="bigbox">
+    <div class="items"></div>
+    <div class="btn loading">小高正在拼命加载中...</div>
+</div>
+<script src="js/jquery.min.js"></script>
+<script src="js/template.js"></script>
+<script src="js/jq.fall.js"></script>
+<script>
+    // 请求数据
+    function getData(page) {
+        $.ajax({
+            url: './data.php',
+            type: 'post',
+            data: {page:page,pageSize:10},
+            beforeSend: function () {
+                $('.btn').text('正在加载...').addClass('loading');
+            },
+            success: function (data){
+                console.log(data.items);
+                console.log((data.items)[0]);
+                window.data=data;
+                var html=template('tep_template',data);
+//                console.log(html)
+                //添加元素
+                $('.items').append(html);
+                //瀑布流布局
+                $('.items').waterfall();
+                $('.btn').attr('data-page',data.page)
+            },
+            complete:function () {
+                if(window.data && window.data.items.length == 0){
+                 $('.btn').text('没有更多了..').addClass('loading');
+                    return false;
+                }
+                $('.btn').text('点击加载更多').removeClass('loading')
+            }
+        })
+    }
+    // 首次加载
+    getData(1);
+    $('.btn').click(function () {
+        if($(this).hasClass('loading')) {
+            //判断是否是在加载过程中，
+            return;
+        }
+        var page = $(this).attr('data-page');
+        getData(page);
+    })
+//    $(window).on('scroll', function () {
+//        var offsettop=$('.items').offset().top;//
+//        var height=$('.items').height();//大盒子高度，会越来越大
+//        var scrlltop=$(this).scrollTop();//滚动高度
+//        var winheight=$(this).height();//浏览器的高度
+//        var offset =  height - scrlltop - winheight;
+//        if(offset <= 200&&!$('.btn').hasClass('loading')){
+//            var page =$('.btn').attr('data-page');
+//            getData(page, function (data) {
+//                renderHtml(data);
+//            })
+//        }
+//    })
+</script>
+<!--模板-->
+<script type="text/template" id="tep_template">
+    {{ each items as val i }}
+    <div class="item">
+        <img src="{{val.path}}" alt="">
+        <p>{{val.text}}</p>
+    </div>
+    {{ /each }}
+</script>
+</body>
+</html>
